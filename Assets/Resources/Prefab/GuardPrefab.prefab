@@ -100,6 +100,7 @@ MonoBehaviour:
   mainCam: {fileID: 0}
   chasingMark: {fileID: 21300000, guid: 383459f3fc5bb0947972603b737a88d1, type: 3}
   boundaryMark: {fileID: 21300000, guid: dc70c037b2e1f9a41af875cf1ffbba20, type: 3}
+  alertMoveMark: {fileID: 21300000, guid: dfd2b3dfe0431b447ab7b42d460256a7, type: 3}
 --- !u!1001 &6845699996014653563
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -356,6 +357,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Layer
       value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 2a2f54f5443eb064dacbca233ac4015d,
+        type: 3}
+      propertyPath: m_TagString
+      value: Enemy
       objectReference: {fileID: 0}
     - target: {fileID: 1082271958561512970, guid: 2a2f54f5443eb064dacbca233ac4015d,
         type: 3}

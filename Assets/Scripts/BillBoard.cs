@@ -10,11 +10,16 @@ public class BillBoard : MonoBehaviour
 
     [SerializeField] private Sprite chasingMark;
     [SerializeField] private Sprite boundaryMark;
+    [SerializeField] private Sprite alertMoveMark;
 
 
     private void Start()
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
+        if(mainCam == null)
+        {
+            mainCam = Camera.main.transform;
+        }
     }
 
     private void LateUpdate()
@@ -30,5 +35,9 @@ public class BillBoard : MonoBehaviour
     public void SetBoundaryMark()
     {
         spriteRenderer.sprite = boundaryMark;
+    }
+    public void SetAlertMoveMark()
+    {
+        spriteRenderer.sprite = alertMoveMark;
     }
 }

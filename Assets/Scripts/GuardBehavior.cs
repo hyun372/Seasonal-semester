@@ -5,7 +5,7 @@ using UnityEngine.AI;
 public class GuardBehavior : MonoBehaviour
 {
     // Guard states
-    public enum GuardState { Normal, Chasing, Boundary }
+    public enum GuardState { Normal, Chasing, Boundary, AlertMove }
 
     // Current state of the guard
     public GuardState currentState = GuardState.Normal;
@@ -37,6 +37,8 @@ public class GuardBehavior : MonoBehaviour
 
     [SerializeField]private BillBoard billBoard;
 
+    private Vector3 alertTarget;
+
     void Start()
     {
         billBoard = GetComponentInChildren<BillBoard>();
@@ -55,18 +57,20 @@ public class GuardBehavior : MonoBehaviour
         switch (currentState)
         {
             case GuardState.Normal:
-                
                 Patrol(); // Perform patrol behavior
                 CheckForPlayer(normalRecognitionRange); // Check for player in normal range
                 break;
             case GuardState.Chasing:
-                
                 ChasePlayer(); // Perform chasing behavior
                 break;
             case GuardState.Boundary:
-                
                 HandleBoundaryMode(); // Handle boundary mode behavior
                 break;
+            case GuardState.AlertMove:
+                HandleAlertMoveMode();
+                CheckForPlayer(normalRecognitionRange); // Check for player in normal range
+                break;
+
         }
     }
 
@@ -140,7 +144,6 @@ public class GuardBehavior : MonoBehaviour
         foreach (Collider guard in guardsInRange)
         {
             GuardBehavior guardBehavior = guard.GetComponent<GuardBehavior>();
-            Debug.Log(guard);
             if (guardBehavior != null && guardBehavior != this)
             {
                 guardBehavior.EnterBoundaryMode();
@@ -177,6 +180,28 @@ public class GuardBehavior : MonoBehaviour
             currentState = GuardState.Boundary;
             boundaryTimer = 0f;
         }
+    }
+
+    public void HandleAlertMoveMode()
+    {
+        billBoard.gameObject.SetActive(true);
+        billBoard.SetAlertMoveMark();
+
+        agent.destination = alertTarget;
+
+        // If the player moves out of chasing range, return to normal mode
+        if (Vector3.Distance(transform.position, alertTarget) <= 2f)
+        {
+            currentState = GuardState.Normal;
+            GoToNextPatrolPoint();
+        }
+    }
+
+    public void EnterAlertMoveMode(Transform tr)
+    {
+        alertTarget = tr.position;
+        alertTarget.y = 0;
+        currentState = GuardState.AlertMove;
     }
 
     // Draw gizmos to visualize recognition ranges in the editor

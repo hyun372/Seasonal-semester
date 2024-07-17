@@ -3,33 +3,71 @@ using UnityEngine;
 public class CCTVBehavior : MonoBehaviour
 {
     public float rotationSpeed = 30f; // Rotation speed of the CCTV
+    public float rotateAngle = 120f; // Rotation angle of the CCTV
+    private bool rotateDirCheck;
+    private float rotateChekcer;
     public float recognitionRange = 15f; // Recognition range of the CCTV
     public float recognitionAngle = 90f; // Recognition angle of the CCTV
+
     public LayerMask playerLayer; // Layer mask to detect the player
     public LayerMask obstacleLayer; // Layer mask to detect obstacles
+    public LayerMask enemyLayer; // Layer mask to detect enemies
+
     public float alertRange = 20f; // Range within which guards are alerted
-    public Transform[] guards; // List of guards to alert
-    public LineRenderer lineRenderer; // LineRenderer component to draw the recognition scope
 
     private bool alarmTriggered = false; // Flag to check if the alarm has been triggered
-
-    void Start()
-    {
-        // Initialize the LineRenderer to draw the recognition scope
-        lineRenderer.positionCount = 31; // Number of points in the arc (increase for a smoother arc)
-        lineRenderer.useWorldSpace = true;
-    }
+    private float alarmTimer = 0f; // Timer to reset the alarm
+    [SerializeField] private Light recognitionLight;
 
     void Update()
     {
         RotateCCTV(); // Rotate the CCTV
         CheckForPlayer(); // Check for the player
-        DrawRecognitionScope(); // Draw the recognition scope
+
+        if (alarmTriggered)
+        {
+            recognitionLight.color = Color.red;
+            alarmTimer += Time.deltaTime;
+            if (alarmTimer >= 1f)
+            {
+                alarmTriggered = false;
+                alarmTimer = 0f;
+            }
+        }
+        else
+        {
+            recognitionLight.color = Color.yellow;
+        }
     }
 
     void RotateCCTV()
     {
-        transform.Rotate(Vector3.up, rotationSpeed * Time.deltaTime); // Rotate the CCTV around the Y axis
+        Quaternion currentRotation = transform.rotation;
+        Vector3 currentEulerAngles = currentRotation.eulerAngles;
+
+        if (rotateChekcer >= rotateAngle / 2)
+        {
+            rotateDirCheck = false;
+        }
+        else if (rotateChekcer <= -rotateAngle / 2)
+        {
+            rotateDirCheck = true;
+        }
+
+        if (rotateDirCheck)
+        {
+            currentEulerAngles.y += rotationSpeed * Time.deltaTime;
+            rotateChekcer += rotationSpeed * Time.deltaTime;
+        }
+        else
+        {
+            currentEulerAngles.y -= rotationSpeed * Time.deltaTime;
+            rotateChekcer -= rotationSpeed * Time.deltaTime;
+        }
+
+        Quaternion newRotation = Quaternion.Euler(currentEulerAngles);
+
+        transform.rotation = newRotation;
     }
 
     void CheckForPlayer()
@@ -61,38 +99,36 @@ public class CCTVBehavior : MonoBehaviour
         if (!alarmTriggered)
         {
             alarmTriggered = true;
-            Debug.Log("Alarm triggered!");
+            BoundaryAllGuard(); // Set all guards to boundary mode
             AlertNearbyGuards(); // Alert nearby guards
         }
     }
 
     void AlertNearbyGuards()
     {
-        Collider[] guardsInRange = Physics.OverlapSphere(transform.position, alertRange, obstacleLayer);
+        Collider[] guardsInRange = Physics.OverlapSphere(transform.position, alertRange, enemyLayer);
 
         foreach (Collider guard in guardsInRange)
         {
             GuardBehavior guardBehavior = guard.GetComponent<GuardBehavior>();
             if (guardBehavior != null)
             {
-                guardBehavior.EnterBoundaryMode(); // Set guards to boundary mode
+                guardBehavior.EnterAlertMoveMode(this.transform); // Set guards to boundary mode
             }
         }
     }
 
-    void DrawRecognitionScope()
-    {
-        float halfAngle = recognitionAngle / 2;
-        float stepAngle = recognitionAngle / (lineRenderer.positionCount - 1);
+    void BoundaryAllGuard(){
+        Collider[] guardsInRange = Physics.OverlapSphere(transform.position, 60, enemyLayer);
 
-        for (int i = 0; i < lineRenderer.positionCount; i++)
+
+        foreach (Collider guard in guardsInRange)
         {
-            float currentAngle = -halfAngle + stepAngle * i;
-            Quaternion rotation = Quaternion.Euler(0, currentAngle, 0);
-            Vector3 direction = rotation * transform.forward;
-            Vector3 position = transform.position + direction * recognitionRange;
-
-            lineRenderer.SetPosition(i, position);
+            GuardBehavior guardBehavior = guard.GetComponent<GuardBehavior>();
+            if (guardBehavior != null)
+            {
+                guardBehavior.EnterBoundaryMode();
+            }
         }
     }
 
@@ -132,4 +168,6 @@ public class CCTVBehavior : MonoBehaviour
             previousPoint = nextPoint;
         }
     }
+
+    
 }
